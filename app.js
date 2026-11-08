@@ -1,4 +1,3 @@
-// Interactive Canvas Engine
 const canvas = document.getElementById('bg-canvas');
 const ctx = canvas.getContext('2d');
 let particles = [];
@@ -49,7 +48,6 @@ function animateParticles() {
 }
 animateParticles();
 
-// DOM References
 const form = document.getElementById('search-form');
 const usernameInput = document.getElementById('username-input');
 const emptyState = document.getElementById('empty-state');
@@ -88,7 +86,6 @@ const langColors = {
   Default: '#6366f1'
 };
 
-// Check for deep-linked user in query parameters
 window.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const user = urlParams.get('user');
@@ -98,7 +95,6 @@ window.addEventListener('DOMContentLoaded', () => {
     fetchGitHubData(user);
   }
 
-  // Quick preset chips
   document.querySelectorAll('.sample-tag').forEach(tag => {
     tag.addEventListener('click', () => {
       const selectedUser = tag.getAttribute('data-user');
@@ -123,7 +119,6 @@ async function fetchGitHubData(username) {
   skeletonLoader.classList.remove('hidden');
 
   try {
-    // 1. Fetch User Profile
     const userRes = await fetch(`https://api.github.com/users/${username}`);
     
     if (userRes.status === 404) {
@@ -140,17 +135,14 @@ async function fetchGitHubData(username) {
 
     const userData = await userRes.json();
 
-    // 2. Fetch Repositories
     const reposRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=30&sort=updated`);
     const reposData = reposRes.ok ? await reposRes.json() : [];
 
-    // 3. Fetch Recent Public Events
     const eventsRes = await fetch(`https://api.github.com/users/${username}/events/public?per_page=6`);
     const eventsData = eventsRes.ok ? await eventsRes.json() : [];
 
     renderCard(userData, reposData, eventsData);
     
-    // Update URL query parameter
     const newUrl = new URL(window.location);
     newUrl.searchParams.set('user', username);
     window.history.pushState({}, '', newUrl);
@@ -182,7 +174,6 @@ function renderCard(user, repos, events) {
   statFollowers.textContent = user.followers;
   statFollowing.textContent = user.following;
 
-  // Aggregate languages across repos
   const langCounts = {};
   repos.forEach(repo => {
     if (repo.language) {
@@ -205,7 +196,6 @@ function renderCard(user, repos, events) {
     });
   }
 
-  // Top repositories ranked by stargazers
   const topRepos = [...repos].sort((a, b) => b.stargazers_count - a.stargazers_count).slice(0, 4);
   reposContainer.innerHTML = '';
 
@@ -236,7 +226,6 @@ function renderCard(user, repos, events) {
     });
   }
 
-  // Parse events (PushEvent, PullRequestEvent, CreateEvent, WatchEvent)
   activityList.innerHTML = '';
   if (!events || events.length === 0) {
     activityList.innerHTML = `<li class="activity-item">No recent public activity recorded.</li>`;
