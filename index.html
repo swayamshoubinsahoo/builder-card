@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BuilderCard — GitHub Profile Visualizer</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- html2canvas for card export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="background-glow"></div>
+
+  <main class="container">
+    <header class="header">
+      <div class="brand">
+        <span class="badge">Hackyard Engineering Task</span>
+        <h1>Builder<span>Card</span></h1>
+        <p>Generate a dynamic, high-fidelity portfolio card from any GitHub profile.</p>
+      </div>
+
+      <form id="search-form" class="search-box">
+        <div class="input-wrapper">
+          <svg class="icon search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+          </svg>
+          <input 
+            type="text" 
+            id="username-input" 
+            placeholder="Enter GitHub username (e.g. torvalds, swayamshoubinsahoo)..." 
+            autocomplete="off"
+            spellcheck="false"
+            required
+          />
+        </div>
+        <button type="submit" id="generate-btn">
+          <span>Generate Card</span>
+        </button>
+      </form>
+    </header>
+
+    <!-- Status / Error Banner -->
+    <div id="status-container" class="status-container hidden">
+      <div class="status-content">
+        <span id="status-icon">⚠️</span>
+        <div id="status-message"></div>
+      </div>
+    </div>
+
+    <!-- Skeleton Loader -->
+    <div id="skeleton-loader" class="builder-card skeleton hidden">
+      <div class="card-header skeleton-row">
+        <div class="skeleton-avatar"></div>
+        <div class="skeleton-text-group">
+          <div class="skeleton-line title"></div>
+          <div class="skeleton-line subtitle"></div>
+        </div>
+      </div>
+      <div class="skeleton-grid">
+        <div class="skeleton-box"></div>
+        <div class="skeleton-box"></div>
+      </div>
+    </div>
+
+    <!-- Main Builder Card Output -->
+    <section id="card-wrapper" class="card-wrapper hidden">
+      <div class="card-actions">
+        <button id="download-btn" class="action-btn" title="Download image">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+          Export PNG
+        </button>
+        <button id="share-btn" class="action-btn" title="Copy Card URL">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          Share Link
+        </button>
+      </div>
+
+      <div id="builder-card" class="builder-card">
+        <!-- Profile Header -->
+        <div class="profile-header">
+          <div class="avatar-wrap">
+            <img id="user-avatar" src="" alt="Profile avatar" />
+          </div>
+          <div class="user-meta">
+            <div class="user-title-wrap">
+              <h2 id="user-name"></h2>
+              <a id="user-handle" href="" target="_blank" rel="noopener noreferrer"></a>
+            </div>
+            <p id="user-bio" class="bio"></p>
+            <div class="meta-tags" id="meta-tags">
+              <!-- Location / Company injected here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Numerical Stats -->
+        <div class="stats-row">
+          <div class="stat-pill">
+            <span class="label">Repositories</span>
+            <span class="value" id="stat-repos">0</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">Followers</span>
+            <span class="value" id="stat-followers">0</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">Following</span>
+            <span class="value" id="stat-following">0</span>
+          </div>
+        </div>
+
+        <!-- Top Languages Aggregate -->
+        <div class="section-block">
+          <h3 class="section-title">Dominant Tech Stack</h3>
+          <div id="languages-container" class="languages-grid"></div>
+        </div>
+
+        <!-- Top Repositories -->
+        <div class="section-block">
+          <h3 class="section-title">Starred Repositories</h3>
+          <div id="repos-container" class="repos-grid"></div>
+        </div>
+
+        <!-- Recent Activity Feed -->
+        <div class="section-block">
+          <h3 class="section-title">Latest Public Activity</h3>
+          <ul id="activity-list" class="activity-timeline"></ul>
+        </div>
+
+        <!-- Footer watermark -->
+        <div class="card-footer">
+          <span>Powered by GitHub REST API</span>
+          <span class="verified-tag">✓ Hackyard Verified Builder</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
