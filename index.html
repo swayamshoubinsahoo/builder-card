@@ -3,51 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BuilderCard — GitHub Profile Visualizer</title>
+  <title>BuilderCard — Developer Profile Visualizer</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-  <div class="background-glow"></div>
+  <!-- Interactive Tech Grid Canvas -->
+  <canvas id="bg-canvas"></canvas>
+  <div class="grid-overlay"></div>
 
   <main class="container">
+    <!-- Top Tech Header -->
     <header class="header">
-      <div class="brand">
-        <span class="badge">Hackyard Engineering Task</span>
-        <h1>Builder<span>Card</span></h1>
-        <p>Generate a dynamic, high-fidelity portfolio card from any GitHub profile.</p>
+      <div class="terminal-badge">
+        <span class="status-indicator"></span>
+        <code>sys.status: online // hackyard-w26</code>
       </div>
+
+      <h1>GitHub <span>BuilderCard</span></h1>
+      <p class="tagline">Generate verifiable developer identity cards directly from real-time GitHub event telemetry.</p>
 
       <form id="search-form" class="search-box">
         <div class="input-wrapper">
-          <svg class="icon search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-          </svg>
+          <span class="prompt-symbol">&gt;_</span>
           <input 
             type="text" 
             id="username-input" 
-            placeholder="Enter GitHub username..." 
+            placeholder="Type any GitHub handle (e.g. torvalds, swayamshoubinsahoo)..." 
             autocomplete="off"
             spellcheck="false"
             required
           />
         </div>
         <button type="submit" id="generate-btn">
-          <span>Generate Card</span>
+          <span>Fetch Builder</span>
         </button>
       </form>
 
       <div class="quick-samples">
-        <span>Try:</span>
+        <span class="sample-label">Inspect Builders:</span>
         <button type="button" class="sample-tag" data-user="swayamshoubinsahoo">@swayamshoubinsahoo</button>
         <button type="button" class="sample-tag" data-user="torvalds">@torvalds</button>
         <button type="button" class="sample-tag" data-user="shadcn">@shadcn</button>
+        <button type="button" class="sample-tag" data-user="antfu">@antfu</button>
       </div>
     </header>
 
+    <!-- Error / Status Notice -->
     <div id="status-container" class="status-container hidden">
       <div class="status-content">
         <span id="status-icon">⚠️</span>
@@ -55,6 +60,7 @@
       </div>
     </div>
 
+    <!-- Skeleton Loader -->
     <div id="skeleton-loader" class="builder-card skeleton hidden">
       <div class="card-header skeleton-row">
         <div class="skeleton-avatar"></div>
@@ -69,6 +75,47 @@
       </div>
     </div>
 
+    <!-- Default Interactive State (Fills empty screen with developer stats) -->
+    <section id="empty-state" class="empty-state">
+      <div class="terminal-card">
+        <div class="terminal-bar">
+          <div class="term-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span class="term-title">telemetry://card-generator</span>
+        </div>
+        <div class="term-body">
+          <p><span class="tok-green">builder@engine</span>:<span class="tok-blue">~</span>$ fetch --capabilities</p>
+          <div class="features-matrix">
+            <div class="feature-cell">
+              <span class="cell-icon">⚡</span>
+              <h4>Live Aggregation</h4>
+              <p>Computes language weights across public repositories in real-time.</p>
+            </div>
+            <div class="feature-cell">
+              <span class="cell-icon">🛰️</span>
+              <h4>Activity Stream</h4>
+              <p>Parses public push, PR, and repo events directly via the Events API.</p>
+            </div>
+            <div class="feature-cell">
+              <span class="cell-icon">🛡️</span>
+              <h4>Defensive Bounds</h4>
+              <p>Dynamic 404 user alerts and 403 rate-limit reset timers.</p>
+            </div>
+            <div class="feature-cell">
+              <span class="cell-icon">📸</span>
+              <h4>Vector Export</h4>
+              <p>Direct canvas snapshotting for Twitter, LinkedIn, and portfolios.</p>
+            </div>
+          </div>
+          <p class="term-instruction">&gt;&gt; Enter a GitHub username above or select a preset to generate the card.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Builder Card Output -->
     <section id="card-wrapper" class="card-wrapper hidden">
       <div class="card-actions">
         <button id="download-btn" class="action-btn" title="Download image">
@@ -82,9 +129,17 @@
       </div>
 
       <div id="builder-card" class="builder-card">
+        <!-- Card Top Accents -->
+        <div class="card-corner tl"></div>
+        <div class="card-corner tr"></div>
+        <div class="card-corner bl"></div>
+        <div class="card-corner br"></div>
+
+        <!-- Profile Header -->
         <div class="profile-header">
           <div class="avatar-wrap">
             <img id="user-avatar" src="" alt="Profile avatar" />
+            <div class="avatar-pulse"></div>
           </div>
           <div class="user-meta">
             <div class="user-title-wrap">
@@ -96,6 +151,7 @@
           </div>
         </div>
 
+        <!-- Quick Numerical Stats -->
         <div class="stats-row">
           <div class="stat-pill">
             <span class="label">Repositories</span>
@@ -111,24 +167,37 @@
           </div>
         </div>
 
+        <!-- Top Languages Aggregate -->
         <div class="section-block">
-          <h3 class="section-title">Dominant Tech Stack</h3>
+          <div class="block-header">
+            <h3 class="section-title">Dominant Tech Stack</h3>
+            <span class="title-meta">// calculated weights</span>
+          </div>
           <div id="languages-container" class="languages-grid"></div>
         </div>
 
+        <!-- Top Repositories -->
         <div class="section-block">
-          <h3 class="section-title">Starred Repositories</h3>
+          <div class="block-header">
+            <h3 class="section-title">Starred Repositories</h3>
+            <span class="title-meta">// ranked by stars</span>
+          </div>
           <div id="repos-container" class="repos-grid"></div>
         </div>
 
+        <!-- Recent Activity Feed -->
         <div class="section-block">
-          <h3 class="section-title">Latest Public Activity</h3>
+          <div class="block-header">
+            <h3 class="section-title">Latest Public Activity</h3>
+            <span class="title-meta">// real-time event log</span>
+          </div>
           <ul id="activity-list" class="activity-timeline"></ul>
         </div>
 
+        <!-- Footer watermark -->
         <div class="card-footer">
-          <span>Powered by GitHub REST API</span>
-          <span class="verified-tag">✓ Hackyard Verified Builder</span>
+          <span>Powered by GitHub REST API v3</span>
+          <span class="verified-tag">✓ Active GitHub Builder</span>
         </div>
       </div>
     </section>

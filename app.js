@@ -1,12 +1,63 @@
-// GitHub Builder Card Engine
+// Interactive Canvas Engine
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 1.5 + 0.5;
+    this.speedX = (Math.random() - 0.5) * 0.4;
+    this.speedY = (Math.random() - 0.5) * 0.4;
+    this.opacity = Math.random() * 0.5 + 0.1;
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    if (this.x < 0) this.x = canvas.width;
+    if (this.x > canvas.width) this.x = 0;
+    if (this.y < 0) this.y = canvas.height;
+    if (this.y > canvas.height) this.y = 0;
+  }
+  draw() {
+    ctx.fillStyle = `rgba(99, 102, 241, ${this.opacity})`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+for (let i = 0; i < 45; i++) {
+  particles.push(new Particle());
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => {
+    p.update();
+    p.draw();
+  });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// DOM References
 const form = document.getElementById('search-form');
 const usernameInput = document.getElementById('username-input');
+const emptyState = document.getElementById('empty-state');
 const statusContainer = document.getElementById('status-container');
 const statusMessage = document.getElementById('status-message');
 const skeletonLoader = document.getElementById('skeleton-loader');
 const cardWrapper = document.getElementById('card-wrapper');
 
-// Card Elements
 const userAvatar = document.getElementById('user-avatar');
 const userName = document.getElementById('user-name');
 const userHandle = document.getElementById('user-handle');
@@ -21,7 +72,6 @@ const activityList = document.getElementById('activity-list');
 const downloadBtn = document.getElementById('download-btn');
 const shareBtn = document.getElementById('share-btn');
 
-// Color map for common GitHub Languages
 const langColors = {
   JavaScript: '#f1e05a',
   TypeScript: '#3178c6',
@@ -38,14 +88,17 @@ const langColors = {
   Default: '#6366f1'
 };
 
-// Auto-load default profile or read query param, and setup sample chips
+// Check for deep-linked user in query parameters
 window.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const user = urlParams.get('user') || 'swayamshoubinsahoo';
+  const user = urlParams.get('user');
   
-  usernameInput.value = user;
-  fetchGitHubData(user);
+  if (user) {
+    usernameInput.value = user;
+    fetchGitHubData(user);
+  }
 
+  // Quick preset chips
   document.querySelectorAll('.sample-tag').forEach(tag => {
     tag.addEventListener('click', () => {
       const selectedUser = tag.getAttribute('data-user');
@@ -65,40 +118,46 @@ form.addEventListener('submit', (e) => {
 
 async function fetchGitHubData(username) {
   showError(null);
+  emptyState.classList.add('hidden');
   cardWrapper.classList.add('hidden');
   skeletonLoader.classList.remove('hidden');
 
   try {
+    // 1. Fetch User Profile
     const userRes = await fetch(`https://api.github.com/users/${username}`);
     
     if (userRes.status === 404) {
-      throw new Error(`User "@${username}" not found. Check the spelling and try again.`);
+      throw new Error(`Builder handle "@${username}" was not found. Please verify the username.`);
     }
     if (userRes.status === 403) {
       const resetTime = userRes.headers.get('X-RateLimit-Reset');
       const resetDate = resetTime ? new Date(resetTime * 1000).toLocaleTimeString() : 'shortly';
-      throw new Error(`GitHub API rate limit exceeded. Please try again after ${resetDate}.`);
+      throw new Error(`GitHub API rate limit exceeded (60 req/hr). Resets at ${resetDate}.`);
     }
     if (!userRes.ok) {
-      throw new Error(`GitHub API Error: ${userRes.statusText}`);
+      throw new Error(`GitHub API returned an error: ${userRes.statusText}`);
     }
 
     const userData = await userRes.json();
 
+    // 2. Fetch Repositories
     const reposRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=30&sort=updated`);
     const reposData = reposRes.ok ? await reposRes.json() : [];
 
-    const eventsRes = await fetch(`https://api.github.com/users/${username}/events/public?per_page=5`);
+    // 3. Fetch Recent Public Events
+    const eventsRes = await fetch(`https://api.github.com/users/${username}/events/public?per_page=6`);
     const eventsData = eventsRes.ok ? await eventsRes.json() : [];
 
     renderCard(userData, reposData, eventsData);
     
+    // Update URL query parameter
     const newUrl = new URL(window.location);
     newUrl.searchParams.set('user', username);
     window.history.pushState({}, '', newUrl);
 
   } catch (err) {
     showError(err.message);
+    emptyState.classList.remove('hidden');
   } finally {
     skeletonLoader.classList.add('hidden');
   }
@@ -109,7 +168,7 @@ function renderCard(user, repos, events) {
   userName.textContent = user.name || user.login;
   userHandle.textContent = `@${user.login}`;
   userHandle.href = user.html_url;
-  userBio.textContent = user.bio || "Crafting code and building next-gen software.";
+  userBio.textContent = user.bio || "Active builder shipping software across the open-source ecosystem.";
 
   metaTags.innerHTML = '';
   if (user.location) {
@@ -123,6 +182,7 @@ function renderCard(user, repos, events) {
   statFollowers.textContent = user.followers;
   statFollowing.textContent = user.following;
 
+  // Aggregate languages across repos
   const langCounts = {};
   repos.forEach(repo => {
     if (repo.language) {
@@ -145,6 +205,7 @@ function renderCard(user, repos, events) {
     });
   }
 
+  // Top repositories ranked by stargazers
   const topRepos = [...repos].sort((a, b) => b.stargazers_count - a.stargazers_count).slice(0, 4);
   reposContainer.innerHTML = '';
 
@@ -175,11 +236,12 @@ function renderCard(user, repos, events) {
     });
   }
 
+  // Parse events (PushEvent, PullRequestEvent, CreateEvent, WatchEvent)
   activityList.innerHTML = '';
   if (!events || events.length === 0) {
     activityList.innerHTML = `<li class="activity-item">No recent public activity recorded.</li>`;
   } else {
-    events.slice(0, 4).forEach(ev => {
+    events.slice(0, 5).forEach(ev => {
       const item = document.createElement('li');
       item.className = 'activity-item';
       
@@ -190,7 +252,7 @@ function renderCard(user, repos, events) {
       } else if (ev.type === 'PullRequestEvent') {
         action = `${ev.payload.action === 'opened' ? 'Opened' : 'Updated'} PR in`;
       } else if (ev.type === 'CreateEvent') {
-        action = `Created ${ev.payload.ref_type || 'resource'} in`;
+        action = `Created ${ev.payload.ref_type || 'repository'} in`;
       } else if (ev.type === 'WatchEvent') {
         action = `Starred repository`;
       }
@@ -226,7 +288,7 @@ function showError(msg) {
 downloadBtn.addEventListener('click', () => {
   const cardElement = document.getElementById('builder-card');
   html2canvas(cardElement, {
-    backgroundColor: '#0b0f19',
+    backgroundColor: '#080b11',
     scale: 2,
     useCORS: true
   }).then(canvas => {
