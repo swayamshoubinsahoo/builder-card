@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <!-- html2canvas for card export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -30,7 +29,7 @@
           <input 
             type="text" 
             id="username-input" 
-            placeholder="Enter GitHub username (e.g. torvalds, swayamshoubinsahoo)..." 
+            placeholder="Enter GitHub username..." 
             autocomplete="off"
             spellcheck="false"
             required
@@ -40,9 +39,15 @@
           <span>Generate Card</span>
         </button>
       </form>
+
+      <div class="quick-samples">
+        <span>Try:</span>
+        <button type="button" class="sample-tag" data-user="swayamshoubinsahoo">@swayamshoubinsahoo</button>
+        <button type="button" class="sample-tag" data-user="torvalds">@torvalds</button>
+        <button type="button" class="sample-tag" data-user="shadcn">@shadcn</button>
+      </div>
     </header>
 
-    <!-- Status / Error Banner -->
     <div id="status-container" class="status-container hidden">
       <div class="status-content">
         <span id="status-icon">⚠️</span>
@@ -50,7 +55,6 @@
       </div>
     </div>
 
-    <!-- Skeleton Loader -->
     <div id="skeleton-loader" class="builder-card skeleton hidden">
       <div class="card-header skeleton-row">
         <div class="skeleton-avatar"></div>
@@ -65,7 +69,6 @@
       </div>
     </div>
 
-    <!-- Main Builder Card Output -->
     <section id="card-wrapper" class="card-wrapper hidden">
       <div class="card-actions">
         <button id="download-btn" class="action-btn" title="Download image">
@@ -79,7 +82,6 @@
       </div>
 
       <div id="builder-card" class="builder-card">
-        <!-- Profile Header -->
         <div class="profile-header">
           <div class="avatar-wrap">
             <img id="user-avatar" src="" alt="Profile avatar" />
@@ -90,13 +92,10 @@
               <a id="user-handle" href="" target="_blank" rel="noopener noreferrer"></a>
             </div>
             <p id="user-bio" class="bio"></p>
-            <div class="meta-tags" id="meta-tags">
-              <!-- Location / Company injected here -->
-            </div>
+            <div class="meta-tags" id="meta-tags"></div>
           </div>
         </div>
 
-        <!-- Quick Numerical Stats -->
         <div class="stats-row">
           <div class="stat-pill">
             <span class="label">Repositories</span>
@@ -112,25 +111,21 @@
           </div>
         </div>
 
-        <!-- Top Languages Aggregate -->
         <div class="section-block">
           <h3 class="section-title">Dominant Tech Stack</h3>
           <div id="languages-container" class="languages-grid"></div>
         </div>
 
-        <!-- Top Repositories -->
         <div class="section-block">
           <h3 class="section-title">Starred Repositories</h3>
           <div id="repos-container" class="repos-grid"></div>
         </div>
 
-        <!-- Recent Activity Feed -->
         <div class="section-block">
           <h3 class="section-title">Latest Public Activity</h3>
           <ul id="activity-list" class="activity-timeline"></ul>
         </div>
 
-        <!-- Footer watermark -->
         <div class="card-footer">
           <span>Powered by GitHub REST API</span>
           <span class="verified-tag">✓ Hackyard Verified Builder</span>

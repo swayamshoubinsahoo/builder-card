@@ -38,14 +38,21 @@ const langColors = {
   Default: '#6366f1'
 };
 
-// Check URL query parameters for direct shared cards
+// Auto-load default profile or read query param, and setup sample chips
 window.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const user = urlParams.get('user');
-  if (user) {
-    usernameInput.value = user;
-    fetchGitHubData(user);
-  }
+  const user = urlParams.get('user') || 'swayamshoubinsahoo';
+  
+  usernameInput.value = user;
+  fetchGitHubData(user);
+
+  document.querySelectorAll('.sample-tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+      const selectedUser = tag.getAttribute('data-user');
+      usernameInput.value = selectedUser;
+      fetchGitHubData(selectedUser);
+    });
+  });
 });
 
 form.addEventListener('submit', (e) => {
@@ -62,10 +69,8 @@ async function fetchGitHubData(username) {
   skeletonLoader.classList.remove('hidden');
 
   try {
-    // 1. Fetch User Profile
     const userRes = await fetch(`https://api.github.com/users/${username}`);
     
-    // Explicit Error Handling: Rate limits (403) and Not Found (404)
     if (userRes.status === 404) {
       throw new Error(`User "@${username}" not found. Check the spelling and try again.`);
     }
@@ -80,17 +85,14 @@ async function fetchGitHubData(username) {
 
     const userData = await userRes.json();
 
-    // 2. Fetch Repositories (sorted by updated, limit to top 30)
     const reposRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=30&sort=updated`);
     const reposData = reposRes.ok ? await reposRes.json() : [];
 
-    // 3. Fetch Recent Public Events (Activity)
     const eventsRes = await fetch(`https://api.github.com/users/${username}/events/public?per_page=5`);
     const eventsData = eventsRes.ok ? await eventsRes.json() : [];
 
     renderCard(userData, reposData, eventsData);
     
-    // Update browser URL query param cleanly without reloading
     const newUrl = new URL(window.location);
     newUrl.searchParams.set('user', username);
     window.history.pushState({}, '', newUrl);
@@ -103,14 +105,12 @@ async function fetchGitHubData(username) {
 }
 
 function renderCard(user, repos, events) {
-  // Render Identity
   userAvatar.src = user.avatar_url;
   userName.textContent = user.name || user.login;
   userHandle.textContent = `@${user.login}`;
   userHandle.href = user.html_url;
   userBio.textContent = user.bio || "Crafting code and building next-gen software.";
 
-  // Meta Tags (Location, Company)
   metaTags.innerHTML = '';
   if (user.location) {
     metaTags.innerHTML += `<span>📍 ${user.location}</span>`;
@@ -119,12 +119,10 @@ function renderCard(user, repos, events) {
     metaTags.innerHTML += `<span>🏢 ${user.company}</span>`;
   }
 
-  // Counters
   statRepos.textContent = user.public_repos;
   statFollowers.textContent = user.followers;
   statFollowing.textContent = user.following;
 
-  // Process & Aggregate Dominant Languages
   const langCounts = {};
   repos.forEach(repo => {
     if (repo.language) {
@@ -147,7 +145,6 @@ function renderCard(user, repos, events) {
     });
   }
 
-  // Sort & Render Top Repositories (Ranked by stargazers_count)
   const topRepos = [...repos].sort((a, b) => b.stargazers_count - a.stargazers_count).slice(0, 4);
   reposContainer.innerHTML = '';
 
@@ -178,7 +175,6 @@ function renderCard(user, repos, events) {
     });
   }
 
-  // Render Recent Activity (PushEvent, PullRequestEvent, CreateEvent)
   activityList.innerHTML = '';
   if (!events || events.length === 0) {
     activityList.innerHTML = `<li class="activity-item">No recent public activity recorded.</li>`;
@@ -210,7 +206,6 @@ function renderCard(user, repos, events) {
   cardWrapper.classList.remove('hidden');
 }
 
-// Relative time helper
 function formatTimeAgo(date) {
   const diff = Math.floor((new Date() - date) / 1000);
   if (diff < 60) return `${diff}s ago`;
@@ -228,7 +223,6 @@ function showError(msg) {
   statusContainer.classList.remove('hidden');
 }
 
-// Export as PNG using html2canvas
 downloadBtn.addEventListener('click', () => {
   const cardElement = document.getElementById('builder-card');
   html2canvas(cardElement, {
@@ -243,7 +237,6 @@ downloadBtn.addEventListener('click', () => {
   });
 });
 
-// Share URL button
 shareBtn.addEventListener('click', () => {
   navigator.clipboard.writeText(window.location.href).then(() => {
     const originalText = shareBtn.innerHTML;

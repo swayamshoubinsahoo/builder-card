@@ -139,6 +139,36 @@ body {
   transform: translateY(-1px);
 }
 
+/* Quick sample tags */
+.quick-samples {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.sample-tag {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  color: #a5b4fc;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sample-tag:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--accent);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
 /* Error / Status */
 .status-container {
   margin-top: 1.5rem;
